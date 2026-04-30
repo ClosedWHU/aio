@@ -33,8 +33,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./sso
-          file: ./sso/server/Dockerfile
+          context: ./sso/server
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.ORG }}/sso:latest
@@ -58,7 +57,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./dugout
+          context: ./dugout/server
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.ORG }}/dugout:latest
@@ -103,21 +102,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build API
+      - name: Build and Push Unified Image
         uses: docker/build-push-action@v5
         with:
-          context: ./whu-sb
-          file: ./whu-sb/Dockerfile.api
+          context: ./whu-sb/server
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-api:latest
-            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-api:${{ github.event.release.tag_name || 'latest' }}
-      - name: Build Queue
-        uses: docker/build-push-action@v5
-        with:
-          context: ./whu-sb
-          file: ./whu-sb/Dockerfile.queue
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-queue:latest
-            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-queue:${{ github.event.release.tag_name || 'latest' }}
+            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb:${{ github.event.release.tag_name || 'latest' }}

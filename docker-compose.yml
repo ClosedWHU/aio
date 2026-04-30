@@ -71,8 +71,9 @@ services:
       - closedwhu-net
 
   whu-sb-api:
-    image: ghcr.io/closedwhu/whu-sb-api:latest
+    image: ghcr.io/closedwhu/whu-sb:latest
     container_name: closedwhu-sb-api
+    command: ["./whu-sb-backend", "serve"]
     depends_on:
       db:
         condition: service_healthy
@@ -82,8 +83,9 @@ services:
       - closedwhu-net
 
   whu-sb-queue:
-    image: ghcr.io/closedwhu/whu-sb-queue:latest
+    image: ghcr.io/closedwhu/whu-sb:latest
     container_name: closedwhu-sb-queue
+    command: ["./whu-sb-backend", "worker"]
     depends_on:
       redis:
         condition: service_healthy
