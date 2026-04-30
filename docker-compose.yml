@@ -1,0 +1,100 @@
+services:
+  # --- Shared Infrastructure ---
+  db:
+    image: ankane/pgvector:16
+    container_name: closedwhu-db
+    environment:
+      POSTGRES_DB: closedwhu
+      POSTGRES_USER: closedwhu
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - closedwhu-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U closedwhu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: closedwhu-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-password}
+    networks:
+      - closedwhu-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Backend Services ---
+  sso:
+    image: ghcr.io/closedwhu/sso:latest
+    container_name: closedwhu-sso
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://closedwhu:${DB_PASSWORD}@db:5432/closedwhu?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      PORT: 9090
+    networks:
+      - closedwhu-net
+
+  dugout:
+    image: ghcr.io/closedwhu/dugout:latest
+    container_name: closedwhu-dugout
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_DSN: postgres://closedwhu:${DB_PASSWORD}@db:5432/closedwhu?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - closedwhu-net
+
+  ham-gateway:
+    image: ghcr.io/closedwhu/ham-gateway:latest
+    container_name: closedwhu-ham-gateway
+    depends_on:
+      - sso
+    environment:
+      SSO_UPSTREAM: http://sso:9090
+    networks:
+      - closedwhu-net
+
+  whu-sb-api:
+    image: ghcr.io/closedwhu/whu-sb-api:latest
+    container_name: closedwhu-sb-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: postgres://closedwhu:${DB_PASSWORD}@db:5432/closedwhu?sslmode=disable
+    networks:
+      - closedwhu-net
+
+  whu-sb-queue:
+    image: ghcr.io/closedwhu/whu-sb-queue:latest
+    container_name: closedwhu-sb-queue
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+    networks:
+      - closedwhu-net
+
+networks:
+  closedwhu-net:
+    driver: bridge
+
+volumes:
+  pgdata:

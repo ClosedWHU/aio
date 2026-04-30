@@ -1,0 +1,123 @@
+name: Build and Push Images to GHCR
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (all, sso, dugout, ham-gateway, whu-sb)'
+        required: true
+        default: 'all'
+
+env:
+  REGISTRY: ghcr.io
+  ORG: closedwhu
+
+jobs:
+  build-sso:
+    if: github.event.inputs.service == 'all' || github.event.inputs.service == 'sso' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ClosedWHU/sso
+          path: sso
+          token: ${{ secrets.GH_PAT }} # PAT required for private repos
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./sso
+          file: ./sso/server/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/sso:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/sso:${{ github.event.release.tag_name || 'latest' }}
+
+  build-dugout:
+    if: github.event.inputs.service == 'all' || github.event.inputs.service == 'dugout' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ClosedWHU/dugout
+          path: dugout
+          token: ${{ secrets.GH_PAT }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dugout
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/dugout:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/dugout:${{ github.event.release.tag_name || 'latest' }}
+
+  build-ham-gateway:
+    if: github.event.inputs.service == 'all' || github.event.inputs.service == 'ham-gateway' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ClosedWHU/ham-gateway
+          path: ham-gateway
+          token: ${{ secrets.GH_PAT }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ham-gateway
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/ham-gateway:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/ham-gateway:${{ github.event.release.tag_name || 'latest' }}
+
+  build-whu-sb:
+    if: github.event.inputs.service == 'all' || github.event.inputs.service == 'whu-sb' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ClosedWHU/whu.sb
+          path: whu-sb
+          token: ${{ secrets.GH_PAT }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build API
+        uses: docker/build-push-action@v5
+        with:
+          context: ./whu-sb
+          file: ./whu-sb/Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-api:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-api:${{ github.event.release.tag_name || 'latest' }}
+      - name: Build Queue
+        uses: docker/build-push-action@v5
+        with:
+          context: ./whu-sb
+          file: ./whu-sb/Dockerfile.queue
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-queue:latest
+            ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb-queue:${{ github.event.release.tag_name || 'latest' }}
