@@ -14,6 +14,11 @@ env:
   REGISTRY: ghcr.io
   ORG: closedwhu
 
+# Essential for pushing to GHCR using GITHUB_TOKEN
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-sso:
     if: github.event.inputs.service == 'all' || github.event.inputs.service == 'sso' || github.event_name == 'release'
@@ -23,13 +28,13 @@ jobs:
         with:
           repository: WHU-sb/WHU-sb-SSO
           path: sso
-          token: ${{ secrets.GH_PAT }} # PAT required for private repos
+          token: ${{ secrets.GH_PAT }}
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_PAT }} # Using GH_PAT for login to ensure org package creation permissions
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -53,11 +58,11 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_PAT }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./dugout/server
+          context: ./dugout
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.ORG }}/dugout:latest
@@ -72,12 +77,13 @@ jobs:
           repository: WHU-sb/ham-gateway
           path: ham-gateway
           token: ${{ secrets.GH_PAT }}
+          submodules: recursive # Critical for proto submodule
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_PAT }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -101,11 +107,11 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_PAT }}
       - name: Build and Push Unified Image
         uses: docker/build-push-action@v5
         with:
-          context: ./whu-sb/server
+          context: ./whu-sb
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.ORG }}/whu-sb:latest
