@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ClosedWHU/sso
+          repository: WHU-sb/WHU-sb-SSO
           path: sso
           token: ${{ secrets.GH_PAT }} # PAT required for private repos
       - name: Login to GHCR
@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ClosedWHU/dugout
+          repository: WHU-Dugout/WHU-Dugout-Server
           path: dugout
           token: ${{ secrets.GH_PAT }}
       - name: Login to GHCR
@@ -69,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ClosedWHU/ham-gateway
+          repository: WHU-sb/ham-gateway
           path: ham-gateway
           token: ${{ secrets.GH_PAT }}
       - name: Login to GHCR
@@ -93,7 +93,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ClosedWHU/whu.sb
+          repository: WHU-sb/WHU-sb-Server
           path: whu-sb
           token: ${{ secrets.GH_PAT }}
       - name: Login to GHCR
